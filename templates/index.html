@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Search</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .header {
+            background-color: #343a40;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .list-group-item h5 a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .list-group-item h5 a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Job Search</h1>
+    </div>
+    <div class="container mt-5">
+        <form id="scrape-form" class="mb-4">
+            <div class="form-group">
+                <input type="text" id="search-keyword" class="form-control" placeholder="Enter job keyword">
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        <h2 class="mb-4">Jobs found: <span id="job-count">0</span></h2>
+        <ul id="job-list" class="list-group"></ul>
+        <button id="load-more" class="btn btn-primary mt-4" style="display: none;">Load More</button>
+    </div>
+    <script>
+        let currentPage = 0;
+        let currentKeyword = '';
+
+        document.getElementById('scrape-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            currentPage = 0;
+            currentKeyword = document.getElementById('search-keyword').value;
+            fetchJobs(currentKeyword, currentPage, true);
+        });
+
+        document.getElementById('load-more').addEventListener('click', function() {
+            currentPage += 1;
+            fetchJobs(currentKeyword, currentPage, false);
+        });
+
+        function fetchJobs(keyword, page, reset) {
+            fetch(`/scrape_jobs?keyword=${keyword}&page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    const jobList = document.getElementById('job-list');
+                    const jobCount = document.getElementById('job-count');
+                    if (reset) {
+                        jobList.innerHTML = '';
+                        jobCount.textContent = 0;
+                    }
+                    data.jobs.forEach(job => {
+                        const jobItem = document.createElement('li');
+                        jobItem.classList.add('list-group-item');
+                        jobItem.innerHTML = `<h5><a href="${job.link}" target="_blank">${job.title}</a></h5><p>${job.company} - ${job.location}</p>`;
+                        jobList.appendChild(jobItem);
+                    });
+                    jobCount.textContent = parseInt(jobCount.textContent) + data.jobs.length;
+                    if (data.jobs.length > 0) {
+                        document.getElementById('load-more').style.display = 'block';
+                    } else {
+                        document.getElementById('load-more').style.display = 'none';
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
